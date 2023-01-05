@@ -1,0 +1,12 @@
+---
+# vars file for /home/ubuntu/tomcat
+mainversion: 8
+subversion: 8.5.84
+tomcat_port: 8282
+role1: role1
+role2: tomcat
+role3: manager-gui
+user1: role1
+user2: tomcat
+user3: both
+passwd: hello123

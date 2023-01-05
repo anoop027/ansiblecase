@@ -1,0 +1,8 @@
+---
+# handlers file for /home/ubuntu/tomcat
+- name: start and enable tomcat service
+  systemd:
+    name: tomcat
+    state: started
+    enabled: true
+    daemon_reload: true

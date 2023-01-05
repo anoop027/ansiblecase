@@ -1,0 +1,64 @@
+---
+# tasks file for /home/ubuntu/tomcat
+   - name: user and group add
+     command: useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+     ignore_errors: true
+   - name: update repos
+     apt:
+       name: "*"
+       state: latest
+   - name: Create directory
+     file:
+       path: /opt/tomcat
+       state: directory
+       mode: 0755
+   - name: Download tomcat
+     get_url:
+       url: "https://dlcdn.apache.org/tomcat/tomcat-{{mainversion}}/v{{subversion}}/bin/apache-tomcat-{{subversion}}.zip"
+       dest: /opt/tomcat
+   - name: extract tomcat
+     unarchive:
+       src: "/opt/tomcat/apache-tomcat-{{subversion}}.zip"
+       dest: /opt/tomcat
+       remote_src: yes
+   - name: create syslink
+     file:
+       src: "/opt/tomcat/apache-tomcat-{{subversion}}"
+       dest: "/opt/tomcat/latest"
+       state: link
+   - name: give tomcat user owner permission
+     file:
+       path: /opt/tomcat
+       owner: tomcat
+       group: tomcat
+       mode: 0755
+       recurse: yes
+       state: directory
+     ignore_errors: true
+   - name: give execute permissions
+     command: "sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'"
+     ignore_errors: true
+   - name: change port
+     template:
+       src: server.xml.j2
+       dest: /opt/tomcat/latest/conf/server.xml
+   - name: copy service file
+     copy:
+       src: tomcat.service
+       dest: /etc/systemd/system/tomcat.service
+   - name: update users and role
+     template:
+       src: tomcat-users.xml.j2
+       dest: /opt/tomcat/latest/conf/tomcat-users.xml
+   - name: update context xml restriction
+     template:
+       src: context-manager.xml
+       dest: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+   - name: update host manager context xml restriction
+     template:
+       src: context-hostmanager.xml
+       dest: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+     notify: start and enable tomcat service
+   
+     
+
