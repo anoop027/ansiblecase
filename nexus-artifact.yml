@@ -1,0 +1,47 @@
+- name: Configure tomcat
+  hosts: testserver
+  become: yes
+  vars:
+     username: admin
+     version: "{{versionno}}"
+  vars_prompt:
+   -  name: password
+      prompt: enter password
+      private: true
+  tasks:
+    - block:
+       - name: Login to nexus and fetch artifact
+         maven_artifact:
+          group_id: com.example.app
+          artifact_id: SimpleTomcatWebApp
+          repository_url: "http://172.31.65.133:8081/repository/java-app-artifact/"
+          version: "{{version}}"
+          extension: war
+          username: "{{username}}"
+          password: "{{password}}"
+          dest: /home/ubuntu/SimpleTomcatWebApp-{{version}}.war
+         register: evar
+      rescue:
+       - name: MESSAGE TO USER
+         fail:
+            msg: 'Entered credentials are incorrect. Please provide the correct Username and Password'
+         when: '"Unauthorized" in evar.msg'
+       - name: MESSAGE TO USER
+         fail:
+            msg: 'The provided artifact version does not exist in the repository. Please provide the correct version'
+         when: '"Unauthorized" not in evar.msg'
+    - name: MESSAGE TO USER
+      debug:
+        msg: 'Artifact version is valid and exists in the repository'
+    - name: Modify the file permissions
+      file:
+       path: /home/ubuntu/SimpleTomcatWebApp-{{version}}.war
+       owner: tomcat
+       group: tomcat
+       mode: 0755
+    - name: move war file to tomcat
+      command: mv /home/ubuntu/SimpleTomcatWebApp-{{version}}.war /opt/tomcat/latest/webapps 
+    - name: tomcat service restart
+      service:
+       name: tomcat
+       state: restarted    

@@ -1,0 +1,78 @@
+- name: Configure tomcat
+  hosts: testserver
+  become: yes
+  vars:
+    tomcat_port: 8282
+    role1: role1
+    role2: tomcat
+    role3: manager-gui
+    user1: role1
+    user2: tomcat
+    user3: both
+    passwd: hello123
+  tasks:
+   - name: user and group add
+     command: useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+     ignore_errors: true
+   - name: update repos
+     apt:
+       name: "*"
+       state: latest
+   - name: Create directory
+     file: 
+       path: /opt/tomcat
+       state: directory
+       mode: 0755
+   - name: Download tomcat
+     get_url:
+       url: "https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.84/bin/apache-tomcat-8.5.84.zip"
+       dest: /opt/tomcat
+   - name: extract tomcat
+     unarchive:
+       src: "/opt/tomcat/apache-tomcat-8.5.84.zip"
+       dest: /opt/tomcat
+       remote_src: yes
+   - name: create syslink
+     file:
+       src: "/opt/tomcat/apache-tomcat-8.5.84"
+       dest: "/opt/tomcat/latest"
+       state: link 
+   - name: give tomcat user owner permission
+     file:
+       path: /opt/tomcat
+       owner: tomcat
+       group: tomcat
+       mode: 0755
+       recurse: yes
+       state: directory
+     ignore_errors: true
+   - name: give execute permissions
+     command: "sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'"
+     ignore_errors: true
+   - name: copy service file
+     copy:
+       src: /home/ubuntu/tomcat.service
+       dest: /etc/systemd/system/tomcat.service
+   - name: change port
+     template:
+       src: server.xml.j2
+       dest: /opt/tomcat/latest/conf/server.xml
+   - name: update users and role
+     template:
+       src: tomcat-users.xml.j2
+       dest: /opt/tomcat/latest/conf/tomcat-users.xml
+   - name: update context xml restriction
+     template:
+       src: context-manager.xml
+       dest: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+   - name: update host manager context xml restriction
+     template:
+       src: context-hostmanager.xml
+       dest: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+   - name: start and enable tomcat service
+     systemd:
+       name: tomcat
+       state: started
+       enabled: true
+       daemon_reload: true
+

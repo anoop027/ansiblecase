@@ -1,0 +1,16 @@
+- name: Configure tomcat
+  hosts: testserver
+  become: yes
+  vars_prompt:
+   -  name: version
+      prompt: Enter version of artifact
+      private: false
+  tasks:
+   - name: Download package from nexus
+     get_url:
+       url: http://3.238.51.48:8081/repository/java-app-artifact/com%2Fexample%2Fapp%2FSimpleTomcatWebApp%2F{{version}}%2FSimpleTomcatWebApp-{{version}}.war
+       dest: /home/ubuntu
+   - name: rename war file
+     command: mv com%2Fexample%2Fapp%2FSimpleTomcatWebApp%2F{{version}}%2FSimpleTomcatWebApp-{{version}}.war SimpleTomcatWebApp-{{version}}.war 
+   - name: move war file to tomcat
+     command: mv SimpleTomcatWebApp-{{version}}.war /opt/tomcat/latest/webapps/

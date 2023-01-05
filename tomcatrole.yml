@@ -1,0 +1,6 @@
+---
+- name: Configure tomcat
+  hosts: testserver
+  become: yes
+  roles: 
+    - role: '/home/ubuntu/tomcat'
