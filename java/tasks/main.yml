@@ -1,0 +1,12 @@
+---
+# tasks file for /home/ubuntu/java
+    - name: Update APT package manager repositories cache
+      become: true
+      apt:
+        update_cache: yes
+    - name: Install Java using Ansible
+      become: yes
+      apt:
+        name: "{{ packages }}"
+        state: present
+      notify: Set JAVA_HOME
